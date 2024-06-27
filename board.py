@@ -16,6 +16,7 @@ class InvalidFillingError(Exception):
 class FillingShapeError(InvalidFillingError):
     pass
 
+
 class InvalidFillingException(Exception):
     pass
 
@@ -89,6 +90,7 @@ class PathFilling:
     def __getitem__(self, item):
         return self.filling[item]
 
+
 class Path:
     def __init__(self, start: tuple[int, int], segments: list[Segment]):
         """
@@ -116,7 +118,8 @@ class Path:
         segments = []
         for i in range(len(points) - 1):
             segments.append(Segment.from_points(points[i], points[i + 1]))
-        return cls(start, segments)
+
+        return cls(tuple(start), segments)
 
 
 class PathObjective(Path):
@@ -202,6 +205,7 @@ class PathObjective(Path):
             return self.BACKWARD
         else:
             return self.OUT
+
 
 @dataclass
 class BoardFilling:
