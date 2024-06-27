@@ -4,6 +4,7 @@ import unittest
 import itertools
 import numpy as np
 
+
 class InvalidFillingException(Exception):
     pass
 
@@ -106,8 +107,9 @@ class Segment:
             return Segment(EAST, point1[1] - point2[1])
         elif point1[0] > point2[0]:
             return Segment(NORTH, point1[0] - point2[0])
-        else: # point1 == point2:
+        else:  # point1 == point2:
             raise ValueError("Given points create a segment of length 0. It is not possible to infer the direction.")
+
 
 @dataclass
 class PathFilling:
@@ -115,14 +117,15 @@ class PathFilling:
 
     def enumerate_just_the_planes(self):
         for i, content in enumerate(self.filling):
-            if content == EMPTY:
-                continue
-            yield i, content
+            if isinstance(content, Plane):
+                yield i, content
 
     def __getitem__(self, item):
         return self.filling[item]
 
+
 Point = np.array
+
 
 class Path:
     def __init__(self, start: Point, segments: list[Segment]):
@@ -170,8 +173,8 @@ class PathObjective(Path):
         self.mandatory_planes = mandatory_planes
 
     @classmethod
-    def from_points(cls, points: tuple[tuple[int, int], ...], flying_forward_mandatory: bool=False,
-                    mandatory_planes: tuple[int]=()):
+    def from_points(cls, points: tuple[tuple[int, int], ...], flying_forward_mandatory: bool = False,
+                    mandatory_planes: tuple[int, ...] = ()):
         path = Path.from_points(points)
         return cls(path.locations[0], path.segments, flying_forward_mandatory, mandatory_planes)
 
@@ -238,24 +241,51 @@ class PathObjective(Path):
         else:
             return self.OUT
 
+
 class BoardFilling:
     def __init__(self, filling: list[list[...]]):
         self.filling = np.array(filling)
+
     def __getitem__(self, item):
         return self.filling[item]
+
     def restrict_to_path(self, path: Path):
         return PathFilling([self[location] for location in path.locations])
 
+    def enumerate_just_the_planes(self):
+        for i, row in enumerate(self.filling):
+            for j, content in enumerate(row):
+                if isinstance(content, Plane):
+                    yield (i, j), content
+
 
 class BoardObjective:
-    def __init__(self, paths: tuple[PathObjective, ...]):
+    def __init__(self, paths: tuple[PathObjective, ...], height=4, width=4):
+        self.height = height
+        self.width = width
         self.paths = paths
 
+        self._raise_error_if_paths_outside_board()
+        self.allowed_plane_locations = set([location for path in paths for location in path.locations])
+
+    def _raise_error_if_paths_outside_board(self):
+        for path in self.paths:
+            for location in itertools.chain([path.locations[0], path.locations[-1]], path.corners):
+                if location[0] < 0 or location[1] < 0 or location[0] >= self.height or location[1] >= self.width:
+                    raise ValueError("Paths do not fit within width of board.")
+
     def raise_exception_if_filling_invalid(self, board_filling: BoardFilling):
+        self._check_all_planes_on_path(board_filling)
+
         for path in self.paths:
             path_filling = board_filling.restrict_to_path(path)
             path.raise_exception_if_filling_invalid(path_filling)
 
+    def _check_all_planes_on_path(self, filling: BoardFilling):
+        for location, plane in filling.enumerate_just_the_planes():
+            print(location, plane)
+            if location not in self.allowed_plane_locations:
+                raise PlaneLocationException(f"Plane at {location} is outside the allowed paths.")
 
 
 if __name__ == '__main__':

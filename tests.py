@@ -139,8 +139,8 @@ class TestBoardFillingMethods(unittest.TestCase):
         print(filling.restrict_to_path(path))
         self.assertEqual(filling.restrict_to_path(path), PathFilling([WEST_FACING_PLANE, WEST_FACING_PLANE, EMPTY, EMPTY]))
 
-
 class TestBoardObjectiveMethods(unittest.TestCase):
+    DEFAULT_BOARD = BoardObjective((PathObjective.from_points(((1, 1), (1, 3), (3, 3))),))
     def test_good_filling_passes(self):
         board = BoardObjective((PathObjective.from_points(((3, 3), (1, 3), (1, 1))),PathObjective.from_points(((0,0), (0, 3)))))
         filling = BoardFilling([[WEST_FACING_PLANE, WEST_FACING_PLANE, EMPTY, EMPTY],
@@ -171,6 +171,110 @@ class TestBoardObjectiveMethods(unittest.TestCase):
                                 [EMPTY, EMPTY, EMPTY]])
 
         self.assertIsNone(board.raise_exception_if_filling_invalid(filling))
+
+    def test_plane_not_along_path(self):
+        board = self.DEFAULT_BOARD
+        filling = BoardFilling([[EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, SOUTH_FACING_PLANE, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY]])
+        with self.assertRaises(PlaneDirectionException):
+            board.raise_exception_if_filling_invalid(filling)
+
+    def test_planes_in_different_directions(self):
+        board = self.DEFAULT_BOARD
+        filling = BoardFilling([[EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, WEST_FACING_PLANE, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, NORTH_FACING_PLANE],
+                                [EMPTY, EMPTY, EMPTY, EMPTY]])
+        with self.assertRaises(PlaneDirectionException):
+            board.raise_exception_if_filling_invalid(filling)
+
+    def test_plane_on_corner(self):
+        board = self.DEFAULT_BOARD
+        filling = BoardFilling([[EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, SOUTH_FACING_PLANE],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY]])
+        with self.assertRaises(PlaneLocationException):
+            board.raise_exception_if_filling_invalid(filling)
+
+    def test_plane_at_start_and_end(self):
+        board = self.DEFAULT_BOARD
+        filling = BoardFilling([[EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EAST_FACING_PLANE, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, NORTH_FACING_PLANE]])
+        self.assertIsNone(board.raise_exception_if_filling_invalid(filling))
+
+    def test_bad_plane_at_end(self):
+        board = self.DEFAULT_BOARD
+        filling = BoardFilling([[EMPTY, EMPTY, EMPTY, EMPTY],
+                               [EMPTY, EMPTY, EMPTY, EMPTY],
+                               [EMPTY, EMPTY, EMPTY, EMPTY],
+                               [EMPTY, EMPTY, EMPTY, WEST_FACING_PLANE]])
+        with self.assertRaises(PlaneDirectionException):
+            board.raise_exception_if_filling_invalid(filling)
+
+    def test_bad_plane_at_start(self):
+        board = self.DEFAULT_BOARD
+        filling = BoardFilling([[EMPTY, EMPTY, EMPTY, EMPTY],
+                               [EMPTY, NORTH_FACING_PLANE, EMPTY, EMPTY],
+                               [EMPTY, EMPTY, EMPTY, EMPTY],
+                               [EMPTY, EMPTY, EMPTY, EMPTY]])
+        with self.assertRaises(PlaneDirectionException):
+            board.raise_exception_if_filling_invalid(filling)
+
+    def test_directed_path_followed(self):
+        board = self.DEFAULT_BOARD
+        board.flying_forward_mandatory = True
+        filling = BoardFilling([[EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, WEST_FACING_PLANE, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY]])
+        self.assertIsNone(board.raise_exception_if_filling_invalid(filling))
+
+    def test_directed_path_not_followed(self):
+        board = BoardObjective((PathObjective.from_points(((3, 3), (1, 3), (1, 1)), flying_forward_mandatory=True),))
+        filling = BoardFilling([[EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, WEST_FACING_PLANE, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY]])
+        with self.assertRaises(PlaneDirectionException):
+            board.raise_exception_if_filling_invalid(filling)
+
+    def test_mandatory_planes_present(self):
+        board = BoardObjective((PathObjective.from_points(((0, 0), (0, 3)), mandatory_planes=(0, 1, 2)),))
+        filling = BoardFilling([[WEST_FACING_PLANE, WEST_FACING_PLANE, WEST_FACING_PLANE, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY]])
+        self.assertIsNone(board.raise_exception_if_filling_invalid(filling))
+
+    def test_mandatory_plane_missing(self):
+        board = BoardObjective((PathObjective.from_points(((0, 0), (0, 3)), mandatory_planes=(0, 1, 2)),))
+        filling = BoardFilling([[WEST_FACING_PLANE, EMPTY, WEST_FACING_PLANE, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY]])
+        with self.assertRaises(MissingPlaneException):
+            board.raise_exception_if_filling_invalid(filling)
+
+    def test_empty_filling_passes(self):
+        board = self.DEFAULT_BOARD
+        filling = BoardFilling([[EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY]])
+        self.assertIsNone(board.raise_exception_if_filling_invalid(filling))
+    def test_plane_outside_path(self):
+        board = self.DEFAULT_BOARD
+        filling = BoardFilling([[NORTH_FACING_PLANE, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY]])
+        with self.assertRaises(PlaneLocationException):
+            board.raise_exception_if_filling_invalid(filling)
 
 
 if __name__ == '__main__':
