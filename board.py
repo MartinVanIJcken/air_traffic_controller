@@ -8,7 +8,6 @@ import numpy as np
 from cardinalDirections import *
 from tiling import Plane
 
-
 class InvalidFillingError(Exception):
     pass
 
@@ -30,6 +29,9 @@ class PlaneDirectionException(InvalidFillingException):
 
 class PlaneLocationException(InvalidFillingException):
     pass
+
+
+
 
 
 class Segment:
@@ -89,8 +91,12 @@ class PathFilling:
     def __getitem__(self, item):
         return self.filling[item]
 
+
+Point = np.array
+
+
 class Path:
-    def __init__(self, start: tuple[int, int], segments: list[Segment]):
+    def __init__(self, start: Point, segments: list[Segment]):
         """
         Creates that goes from point to point in straight vertical or horizontal segments
         """
@@ -98,7 +104,7 @@ class Path:
         self.directions = []
         self.locations = []
         self.segments = segments
-        current_location = np.array(start)
+        current_location = start
         for segment in segments:
             self.directions += [segment.direction] * segment.length
             self.locations += segment.locations(current_location)
@@ -124,7 +130,7 @@ class PathObjective(Path):
     BACKWARD = "BACKWARD"
     OUT = "OUT"
 
-    def __init__(self, start: tuple[int, int], segments: list[Segment], flying_forward_mandatory: bool,
+    def __init__(self, start: Point, segments: list[Segment], flying_forward_mandatory: bool,
                  mandatory_planes: tuple[int]):
         """
         Creates that goes from point to point in straight vertical or horizontal lines
@@ -196,9 +202,9 @@ class PathObjective(Path):
             previous_direction = current_direction
 
     def _forward_backward_or_out(self, location, direction):
-        if self.directions[location] is direction:
+        if self.directions[location] == direction:
             return self.FORWARD
-        elif self.directions[location] is direction.opposite_direction():
+        elif self.directions[location] == direction.opposite_direction():
             return self.BACKWARD
         else:
             return self.OUT
