@@ -5,8 +5,8 @@ import unittest
 import itertools
 import numpy as np
 
-from cardinalDirections import NORTH, WEST, SOUTH, EAST, CardinalDirection
-
+from cardinalDirections import *
+from tiling import Plane
 
 class InvalidFillingError(Exception):
     pass
@@ -31,17 +31,6 @@ class PlaneLocationException(InvalidFillingException):
     pass
 
 
-@dataclass
-class Plane:
-    direction: CardinalDirection
-
-
-NORTH_FACING_PLANE = Plane(NORTH)
-WEST_FACING_PLANE = Plane(WEST)
-SOUTH_FACING_PLANE = Plane(SOUTH)
-EAST_FACING_PLANE = Plane(EAST)
-
-EMPTY = "Empty"
 
 
 
@@ -173,7 +162,7 @@ class PathObjective(Path):
 
     @staticmethod
     def _check_mandatory_plane_present(filling, mandatory_plane):
-        if filling[mandatory_plane] == EMPTY:
+        if not isinstance(filling[mandatory_plane], Plane):
             raise MissingPlaneException(f"Plane missing at index {mandatory_plane}")
 
     def _check_no_planes_on_corners(self, filling: PathFilling):
@@ -182,7 +171,7 @@ class PathObjective(Path):
 
     def _check_no_plane_on_corner(self, corner, filling):
         index = self.locations.index(corner)
-        if filling[index] != EMPTY:
+        if isinstance(filling[index], Plane):
             raise PlaneLocationException
 
     def _check_all_planes_along_path(self, filling: PathFilling):

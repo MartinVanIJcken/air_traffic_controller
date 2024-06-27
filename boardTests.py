@@ -1,5 +1,6 @@
 import unittest
 from board import *
+from tiling import NORTH_FACING_PLANE, WEST_FACING_PLANE, SOUTH_FACING_PLANE, EAST_FACING_PLANE, EMPTY
 
 class TestCardinalDirections(unittest.TestCase):
     def test_invalid_direction(self):
