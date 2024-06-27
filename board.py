@@ -1,9 +1,16 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from typing import Iterable
 import unittest
 import itertools
 import numpy as np
 
+class InvalidFillingError(Exception):
+    pass
+
+
+class FillingShapeError(InvalidFillingError):
+    pass
 
 class InvalidFillingException(Exception):
     pass
@@ -241,10 +248,15 @@ class PathObjective(Path):
         else:
             return self.OUT
 
-
+@dataclass
 class BoardFilling:
-    def __init__(self, filling: list[list[...]]):
+    def __init__(self, filling: Iterable[Iterable[...]]):
         self.filling = np.array(filling)
+
+        self.shape = self.filling.shape
+
+        if len(self.filling.shape) != 2:
+            raise ValueError("Filling is not a rectangle.")
 
     def __getitem__(self, item):
         return self.filling[item]
@@ -260,9 +272,8 @@ class BoardFilling:
 
 
 class BoardObjective:
-    def __init__(self, paths: tuple[PathObjective, ...], height=4, width=4):
-        self.height = height
-        self.width = width
+    def __init__(self, paths: tuple[PathObjective, ...], shape: tuple[int, int]):
+        self.shape = shape
         self.paths = paths
 
         self._raise_error_if_paths_outside_board()
@@ -271,15 +282,20 @@ class BoardObjective:
     def _raise_error_if_paths_outside_board(self):
         for path in self.paths:
             for location in itertools.chain([path.locations[0], path.locations[-1]], path.corners):
-                if location[0] < 0 or location[1] < 0 or location[0] >= self.height or location[1] >= self.width:
+                if location[0] < 0 or location[1] < 0 or location[0] >= self.shape[0] or location[1] >= self.shape[1]:
                     raise ValueError("Paths do not fit within width of board.")
 
     def raise_exception_if_filling_invalid(self, board_filling: BoardFilling):
+        self._check_filling_dimensions(board_filling)
         self._check_all_planes_on_path(board_filling)
 
         for path in self.paths:
             path_filling = board_filling.restrict_to_path(path)
             path.raise_exception_if_filling_invalid(path_filling)
+
+    def _check_filling_dimensions(self, board_filling):
+        if board_filling.shape != self.shape:
+            raise FillingShapeError("Filling does not have the same shape as the board.")
 
     def _check_all_planes_on_path(self, filling: BoardFilling):
         for location, plane in filling.enumerate_just_the_planes():

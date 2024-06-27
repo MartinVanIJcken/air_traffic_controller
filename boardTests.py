@@ -1,5 +1,5 @@
 import unittest
-from gameBoard import *
+from board import *
 
 class TestCardinalDirections(unittest.TestCase):
     def test_invalid_direction(self):
@@ -140,9 +140,12 @@ class TestBoardFillingMethods(unittest.TestCase):
         self.assertEqual(filling.restrict_to_path(path), PathFilling([WEST_FACING_PLANE, WEST_FACING_PLANE, EMPTY, EMPTY]))
 
 class TestBoardObjectiveMethods(unittest.TestCase):
-    DEFAULT_BOARD = BoardObjective((PathObjective.from_points(((1, 1), (1, 3), (3, 3))),))
+    DEFAULT_BOARD = BoardObjective((PathObjective.from_points(((1, 1), (1, 3), (3, 3))),), shape=(4, 4))
     def test_good_filling_passes(self):
-        board = BoardObjective((PathObjective.from_points(((3, 3), (1, 3), (1, 1))),PathObjective.from_points(((0,0), (0, 3)))))
+        board = BoardObjective(
+            (PathObjective.from_points(((3, 3), (1, 3), (1, 1))),
+             PathObjective.from_points(((0,0), (0, 3)))),
+            shape=(4, 4))
         filling = BoardFilling([[WEST_FACING_PLANE, WEST_FACING_PLANE, EMPTY, EMPTY],
                                 [EMPTY, WEST_FACING_PLANE, EMPTY, EMPTY],
                                 [EMPTY, EMPTY, EMPTY, SOUTH_FACING_PLANE],
@@ -150,7 +153,9 @@ class TestBoardObjectiveMethods(unittest.TestCase):
         self.assertIsNone(board.raise_exception_if_filling_invalid(filling))
 
     def test_crossing_paths(self):
-        board = BoardObjective((PathObjective.from_points(((0, 1), (2,1))),PathObjective.from_points(((1, 0), (1,2)))))
+        board = BoardObjective(
+            (PathObjective.from_points(((0, 1), (2,1))),PathObjective.from_points(((1, 0), (1,2)))),
+            shape=(3, 3))
         filling = BoardFilling([[EMPTY, EMPTY, EMPTY],
                                [EMPTY, EMPTY, EMPTY],
                                [EMPTY, EMPTY, EMPTY]])
@@ -165,7 +170,9 @@ class TestBoardObjectiveMethods(unittest.TestCase):
 
     def test_parallel_overlapping_paths(self):
         board = BoardObjective(
-            (PathObjective.from_points(((0, 1), (2, 1))), PathObjective.from_points(((0, 0), (0, 1), (2, 1), (2, 0)))))
+            (PathObjective.from_points(((0, 1), (2, 1))),
+             PathObjective.from_points(((0, 0), (0, 1), (2, 1), (2, 0)))),
+             shape=(3,3))
         filling = BoardFilling([[EMPTY, EMPTY, EMPTY],
                                 [EMPTY, SOUTH_FACING_PLANE, EMPTY],
                                 [EMPTY, EMPTY, EMPTY]])
@@ -235,7 +242,9 @@ class TestBoardObjectiveMethods(unittest.TestCase):
         self.assertIsNone(board.raise_exception_if_filling_invalid(filling))
 
     def test_directed_path_not_followed(self):
-        board = BoardObjective((PathObjective.from_points(((3, 3), (1, 3), (1, 1)), flying_forward_mandatory=True),))
+        board = BoardObjective(
+            (PathObjective.from_points(((3, 3), (1, 3), (1, 1)), flying_forward_mandatory=True),),
+            shape=(4, 4))
         filling = BoardFilling([[EMPTY, EMPTY, EMPTY, EMPTY],
                                 [EMPTY, WEST_FACING_PLANE, EMPTY, EMPTY],
                                 [EMPTY, EMPTY, EMPTY, EMPTY],
@@ -244,7 +253,9 @@ class TestBoardObjectiveMethods(unittest.TestCase):
             board.raise_exception_if_filling_invalid(filling)
 
     def test_mandatory_planes_present(self):
-        board = BoardObjective((PathObjective.from_points(((0, 0), (0, 3)), mandatory_planes=(0, 1, 2)),))
+        board = BoardObjective(
+            (PathObjective.from_points(((0, 0), (0, 3)), mandatory_planes=(0, 1, 2)),),
+            shape=(4, 4))
         filling = BoardFilling([[WEST_FACING_PLANE, WEST_FACING_PLANE, WEST_FACING_PLANE, EMPTY],
                                 [EMPTY, EMPTY, EMPTY, EMPTY],
                                 [EMPTY, EMPTY, EMPTY, EMPTY],
@@ -252,7 +263,9 @@ class TestBoardObjectiveMethods(unittest.TestCase):
         self.assertIsNone(board.raise_exception_if_filling_invalid(filling))
 
     def test_mandatory_plane_missing(self):
-        board = BoardObjective((PathObjective.from_points(((0, 0), (0, 3)), mandatory_planes=(0, 1, 2)),))
+        board = BoardObjective(
+            (PathObjective.from_points(((0, 0), (0, 3)),mandatory_planes=(0, 1, 2),),),
+            shape=(4, 4))
         filling = BoardFilling([[WEST_FACING_PLANE, EMPTY, WEST_FACING_PLANE, EMPTY],
                                 [EMPTY, EMPTY, EMPTY, EMPTY],
                                 [EMPTY, EMPTY, EMPTY, EMPTY],
@@ -275,6 +288,30 @@ class TestBoardObjectiveMethods(unittest.TestCase):
                                 [EMPTY, EMPTY, EMPTY, EMPTY]])
         with self.assertRaises(PlaneLocationException):
             board.raise_exception_if_filling_invalid(filling)
+
+    def test_filling_dimensions_too_small(self):
+        board = self.DEFAULT_BOARD
+        filling = BoardFilling([[]])
+
+        with self.assertRaises(FillingShapeError):
+            board.raise_exception_if_filling_invalid(filling)
+
+    def test_filling_dimensions_too_big(self):
+        board = self.DEFAULT_BOARD
+        filling = BoardFilling([[EMPTY, EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY],
+                                [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY]])
+
+        with self.assertRaises(FillingShapeError):
+            board.raise_exception_if_filling_invalid(filling)
+
+    def test_filling_dimensions_non_rectangular(self):
+        with self.assertRaises(ValueError):
+            BoardFilling([[EMPTY, EMPTY, EMPTY, EMPTY, EMPTY],
+                          [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY],
+                          [EMPTY, EMPTY, EMPTY, EMPTY]])
 
 
 if __name__ == '__main__':
