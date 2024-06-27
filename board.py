@@ -5,6 +5,9 @@ import unittest
 import itertools
 import numpy as np
 
+from cardinalDirections import NORTH, WEST, SOUTH, EAST, CardinalDirection
+
+
 class InvalidFillingError(Exception):
     pass
 
@@ -28,38 +31,6 @@ class PlaneLocationException(InvalidFillingException):
     pass
 
 
-class CardinalDirection:
-    __match_args__ = tuple("direction")
-
-    def __init__(self, direction):
-        if direction not in "NORTH SOUTH WEST EAST".split():
-            raise ValueError(f"{direction} is not a cardinal direction.")
-        self.direction = direction
-
-    def opposite_direction(self):
-        if self.direction == "NORTH":
-            return CardinalDirection("SOUTH")
-        elif self.direction == "WEST":
-            return CardinalDirection("EAST")
-        elif self.direction == "SOUTH":
-            return CardinalDirection("NORTH")
-        elif self.direction == "EAST":
-            return CardinalDirection("WEST")
-
-    def __eq__(self, other):
-        return self.direction == other.direction
-
-    def __repr__(self):
-        return self.direction
-
-
-NORTH = CardinalDirection("NORTH")
-WEST = CardinalDirection("WEST")
-SOUTH = CardinalDirection("SOUTH")
-EAST = CardinalDirection("EAST")
-EMPTY = "Empty"
-
-
 @dataclass
 class Plane:
     direction: CardinalDirection
@@ -70,6 +41,9 @@ WEST_FACING_PLANE = Plane(WEST)
 SOUTH_FACING_PLANE = Plane(SOUTH)
 EAST_FACING_PLANE = Plane(EAST)
 
+EMPTY = "Empty"
+
+
 
 class Segment:
     def __init__(self, direction: CardinalDirection, length: int):
@@ -77,30 +51,28 @@ class Segment:
         self.length = length
 
     def locations(self, starting_location) -> list[tuple[int, int]]:
-        match self.direction:
-            case CardinalDirection(direction="NORTH"):
-                return list(zip(range(starting_location[0], starting_location[0] - self.length, -1),
-                                itertools.repeat(starting_location[1], self.length)))
-            case CardinalDirection(direction="WEST"):
-                return list(zip(itertools.repeat(starting_location[0], self.length),
-                                range(starting_location[1], starting_location[1] + self.length)))
-            case CardinalDirection(direction="SOUTH"):
-                return list(zip(range(starting_location[0], starting_location[0] + self.length),
-                                itertools.repeat(starting_location[1], self.length)))
-            case CardinalDirection(direction="EAST"):
-                return list(zip(itertools.repeat(starting_location[0], self.length),
-                                range(starting_location[1], starting_location[1] - self.length, -1)))
+        if self.direction is NORTH:
+            return list(zip(range(starting_location[0], starting_location[0] - self.length, -1),
+                            itertools.repeat(starting_location[1], self.length)))
+        elif self.direction is WEST:
+            return list(zip(itertools.repeat(starting_location[0], self.length),
+                            range(starting_location[1], starting_location[1] + self.length)))
+        elif self.direction is SOUTH:
+            return list(zip(range(starting_location[0], starting_location[0] + self.length),
+                            itertools.repeat(starting_location[1], self.length)))
+        elif self.direction is EAST:
+            return list(zip(itertools.repeat(starting_location[0], self.length),
+                            range(starting_location[1], starting_location[1] - self.length, -1)))
 
     def displacement(self) -> np.ndarray[int]:
-        match self.direction:
-            case CardinalDirection(direction="NORTH"):
-                return np.array((-self.length, 0))
-            case CardinalDirection(direction="WEST"):
-                return np.array((0, self.length))
-            case CardinalDirection(direction="SOUTH"):
-                return np.array((self.length, 0))
-            case CardinalDirection(direction="EAST"):
-                return np.array((0, -self.length))
+        if self.direction is NORTH:
+            return np.array((-self.length, 0))
+        elif self.direction is WEST:
+            return np.array((0, self.length))
+        elif self.direction is SOUTH:
+            return np.array((self.length, 0))
+        elif self.direction is EAST:
+            return np.array((0, -self.length))
 
     @classmethod
     def from_points(cls, point1, point2):
