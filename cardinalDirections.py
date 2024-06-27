@@ -8,19 +8,28 @@ class CardinalDirection:
 
     def opposite_direction(self):
         if self.direction == "NORTH":
-            return CardinalDirection("SOUTH")
+            return SOUTH
         elif self.direction == "WEST":
-            return CardinalDirection("EAST")
+            return EAST
         elif self.direction == "SOUTH":
-            return CardinalDirection("NORTH")
+            return NORTH
         elif self.direction == "EAST":
-            return CardinalDirection("WEST")
+            return WEST
+
+    def __key(self):
+        return self.direction
+
+    def __hash__(self):
+        return hash(self.__key())
 
     def __eq__(self, other):
-        return self.direction == other.direction
+        if isinstance(other, CardinalDirection):
+            return self.__key() == other.__key()
+        return NotImplemented
 
     def __repr__(self):
-        return self.direction
+        return repr(self.__key())
+
 
 NORTH = CardinalDirection("NORTH")
 WEST = CardinalDirection("WEST")
