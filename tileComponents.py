@@ -26,7 +26,7 @@ class Plane(TileComponent):
         i = self._PLANES_ORDERED_COUNTERCLOCKWISE.index(self)
         return self._PLANES_ORDERED_COUNTERCLOCKWISE[(i + k) % 4]
 
-class RotationInvariantComponent(TileComponent):
+class RotationInvariantTileComponent(TileComponent):
     def __init__(self, symbol:str):
         self.symbol = symbol
 
@@ -42,5 +42,5 @@ SOUTH_FACING_PLANE = Plane(SOUTH, 'v')
 EAST_FACING_PLANE = Plane(EAST, '<')
 
 Plane._PLANES_ORDERED_COUNTERCLOCKWISE = [NORTH_FACING_PLANE, WEST_FACING_PLANE, SOUTH_FACING_PLANE, EAST_FACING_PLANE]
-COVERED = RotationInvariantComponent('o')
-UNCOVERED = RotationInvariantComponent(' ')
+COVERED = RotationInvariantTileComponent('o')
+UNCOVERED = RotationInvariantTileComponent(' ')

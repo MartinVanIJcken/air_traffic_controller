@@ -1,6 +1,6 @@
 import numpy as np
 
-from tileComponents import TileComponent
+from tileComponents import TileComponent, UNCOVERED
 from board import BoardFilling
 
 TileContentType = np.ndarray[TileComponent]
@@ -35,7 +35,10 @@ class Tile:
         return repr(self.content)
 
 class Tiling:
-    def __init__(self, tiles: dict[tuple[int, int], Tile]):
+    def __init__(self, tiles: list[tuple[int, int], Tile], shape: tuple[int, int]):
         self.tiles = tiles
+        self.filling = np.full(shape, UNCOVERED)
+
 
     def to_filling(self) -> BoardFilling:
+        pass
