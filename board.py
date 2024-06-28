@@ -32,25 +32,38 @@ class PlaneDirectionException(InvalidFillingException):
 class PlaneLocationException(InvalidFillingException):
     pass
 
+@dataclass(frozen=True)
+class Point:
+    coordinates: tuple[int, int]
+    def __add__(self, other):
+        return Point((self[0] + other[0], self[1]+other[1]))
+
+    def __getitem__(self, item):
+        return self.coordinates[item]
+
 
 class Segment:
     def __init__(self, direction: CardinalDirection, length: int):
         self.direction = direction
         self.length = length
 
-    def locations(self, starting_location) -> list[tuple[int, int]]:
+    def locations(self, starting_location: Point) -> list[Point]:
         if self.direction is NORTH:
-            return list(zip(range(starting_location[0], starting_location[0] - self.length, -1),
-                            itertools.repeat(starting_location[1], self.length)))
+            return [Point(coordinates) for coordinates in
+                    zip(range(starting_location[0], starting_location[0] - self.length, -1),
+                        itertools.repeat(starting_location[1], self.length))]
         elif self.direction is WEST:
-            return list(zip(itertools.repeat(starting_location[0], self.length),
-                            range(starting_location[1], starting_location[1] + self.length)))
+            return [Point(coordinates) for coordinates in
+                    zip(itertools.repeat(starting_location[0], self.length),
+                        range(starting_location[1], starting_location[1] + self.length))]
         elif self.direction is SOUTH:
-            return list(zip(range(starting_location[0], starting_location[0] + self.length),
-                            itertools.repeat(starting_location[1], self.length)))
+            return [Point(coordinates) for coordinates in
+                    zip(range(starting_location[0], starting_location[0] + self.length),
+                        itertools.repeat(starting_location[1], self.length))]
         elif self.direction is EAST:
-            return list(zip(itertools.repeat(starting_location[0], self.length),
-                            range(starting_location[1], starting_location[1] - self.length, -1)))
+            return [Point(coordinates) for coordinates in
+                    zip(itertools.repeat(starting_location[0], self.length),
+                        range(starting_location[1], starting_location[1] - self.length, -1))]
 
     def displacement(self) -> np.ndarray[int]:
         if self.direction is NORTH:
@@ -63,7 +76,7 @@ class Segment:
             return np.array((0, -self.length))
 
     @classmethod
-    def from_points(cls, point1, point2):
+    def from_points(cls, point1: Point, point2: Point):
         if point1[0] != point2[0] and point1[1] != point2[1]:
             raise ValueError("Given points do not lie along a cardinal direction.")
         if point1[0] < point2[0]:
@@ -90,36 +103,41 @@ class PathFilling:
     def __getitem__(self, item):
         return self.filling[item]
 
+    def __len__(self):
+        return len(self.filling)
+
 
 class Path:
-    def __init__(self, start: tuple[int, int], segments: list[Segment]):
+    def __init__(self, start: Point, segments: list[Segment]):
         """
         Creates that goes from point to point in straight vertical or horizontal segments
         """
-        self.corners = []
-        self.directions = []
-        self.locations = []
+        self.corners: list[Point] = []
+        self.directions: list[CardinalDirection] = []
+        self.locations: list[Point] = []
         self.segments = segments
-        current_location = np.array(start)
+        current_location = start
         for segment in segments:
             self.directions += [segment.direction] * segment.length
             self.locations += segment.locations(current_location)
             current_location += segment.displacement()
-            self.corners.append(tuple(current_location))
+            self.corners.append(current_location)
 
         self.corners.pop()
         self.directions.append(self.directions[-1])
-        self.locations.append(tuple(current_location))
+        self.locations.append(current_location)
 
     @classmethod
-    def from_points(cls, points: tuple[tuple[int, int], ...]):
-        points = list(map(np.array, points))
+    def from_points(cls, points: list[Point]):
         start = points[0]
         segments = []
         for i in range(len(points) - 1):
             segments.append(Segment.from_points(points[i], points[i + 1]))
 
-        return cls(tuple(start), segments)
+        return cls(start, segments)
+
+    def __len__(self):
+        return len(self.locations)
 
 
 class PathObjective(Path):
@@ -127,7 +145,7 @@ class PathObjective(Path):
     BACKWARD = "BACKWARD"
     OUT = "OUT"
 
-    def __init__(self, start: tuple[int, int], segments: list[Segment], flying_forward_mandatory: bool,
+    def __init__(self, start: Point, segments: list[Segment], flying_forward_mandatory: bool,
                  mandatory_planes: tuple[int]):
         """
         Creates that goes from point to point in straight vertical or horizontal lines
@@ -138,12 +156,13 @@ class PathObjective(Path):
         self.mandatory_planes = mandatory_planes
 
     @classmethod
-    def from_points(cls, points: tuple[tuple[int, int], ...], flying_forward_mandatory: bool = False,
+    def from_points(cls, points: list[Point], flying_forward_mandatory: bool = False,
                     mandatory_planes: tuple[int, ...] = ()):
         path = Path.from_points(points)
         return cls(path.locations[0], path.segments, flying_forward_mandatory, mandatory_planes)
 
     def raise_exception_if_filling_invalid(self, filling: PathFilling):
+        self._check_filling_shape(filling)
         self._check_all_mandatory_planes_present(filling)
         self._check_no_planes_on_corners(filling)
         self._check_all_planes_along_path(filling)
@@ -153,12 +172,16 @@ class PathObjective(Path):
         else:
             self._check_planes_fly_in_same_direction(filling)
 
+    def _check_filling_shape(self, filling):
+        if len(filling) != len(self):
+            raise FillingShapeError(f"The filling does not have the right length. Filling length is {len(filling)}, should be {len(self.locations)}.")
+
     def _check_all_mandatory_planes_present(self, filling: PathFilling):
         for mandatory_plane in self.mandatory_planes:
             self._check_mandatory_plane_present(filling, mandatory_plane)
 
     @staticmethod
-    def _check_mandatory_plane_present(filling, mandatory_plane):
+    def _check_mandatory_plane_present(filling: PathFilling, mandatory_plane: int):
         if not isinstance(filling[mandatory_plane], Plane):
             raise MissingPlaneException(f"Plane missing at index {mandatory_plane}")
 
@@ -166,7 +189,7 @@ class PathObjective(Path):
         for corner in self.corners:
             self._check_no_plane_on_corner(corner, filling)
 
-    def _check_no_plane_on_corner(self, corner, filling):
+    def _check_no_plane_on_corner(self, corner: Point, filling: PathFilling):
         index = self.locations.index(corner)
         if isinstance(filling[index], Plane):
             raise PlaneLocationException
@@ -217,8 +240,10 @@ class BoardFilling:
         if len(self.filling.shape) != 2:
             raise ValueError("Filling is not a rectangle.")
 
-    def __getitem__(self, item):
-        return self.filling[item]
+    def __getitem__(self, item: Point):
+        if not isinstance(item, Point):
+            raise ValueError(item)
+        return self.filling[item.coordinates]
 
     def restrict_to_path(self, path: Path):
         return PathFilling([self[location] for location in path.locations])
@@ -227,22 +252,57 @@ class BoardFilling:
         for i, row in enumerate(self.filling):
             for j, content in enumerate(row):
                 if isinstance(content, Plane):
-                    yield (i, j), content
+                    yield Point((i, j)), content
 
 
 class BoardObjective:
-    def __init__(self, paths: tuple[PathObjective, ...], shape: tuple[int, int]):
+    def __init__(self, paths: list[PathObjective, ...], shape: tuple[int, int]):
         self.shape = shape
         self.paths = paths
 
         self._raise_error_if_paths_outside_board()
         self.allowed_plane_locations = set([location for path in paths for location in path.locations])
 
+
     def _raise_error_if_paths_outside_board(self):
         for path in self.paths:
             for location in itertools.chain([path.locations[0], path.locations[-1]], path.corners):
                 if location[0] < 0 or location[1] < 0 or location[0] >= self.shape[0] or location[1] >= self.shape[1]:
                     raise ValueError("Paths do not fit within width of board.")
+
+    @classmethod
+    def from_string(cls, board_objective_str: str):
+        paths = []
+        for i, row in enumerate(board_objective_str):
+            for j, char in enumerate(row):
+                if char == 's':
+                    return cls._create_path_objective(board_objective_str, (i,j))
+
+    @staticmethod
+    def _create_path_objective(board_objective_str, start) -> PathObjective:
+        """
+        Walks along the path and creates a PathObjective object
+        :param board_objective_str:
+        :param start:
+        :return:
+        """
+        current_location = start
+        previous_direction = 'undirected'
+        points = []
+        unit_steps = {'>': (0,1), 'v': (1,0), '^': (-1,0), '<': (0,-1)}
+        while True:
+            current_direction = board_objective_str[current_location]
+
+            if  current_direction != previous_direction:
+                points.append(current_location)
+
+            if current_direction == 'e':
+                break
+
+            current_location += unit_steps[current_direction]
+
+        return PathObjective.from_points(points)
+
 
     def raise_exception_if_filling_invalid(self, board_filling: BoardFilling):
         self._check_filling_dimensions(board_filling)
