@@ -146,7 +146,6 @@ class TestBoardFillingMethods(unittest.TestCase):
                                 [COVERED, COVERED, COVERED, SOUTH_FACING_PLANE],
                                 [COVERED, COVERED, COVERED, COVERED]])
         path = Path.from_points([Point((0,0)), Point((0,3))])
-        print(filling.restrict_to_path(path))
         self.assertEqual(filling.restrict_to_path(path), PathFilling([WEST_FACING_PLANE, WEST_FACING_PLANE, COVERED, COVERED]))
 
 class TestBoardObjectiveMethods(unittest.TestCase):
@@ -322,6 +321,31 @@ class TestBoardObjectiveMethods(unittest.TestCase):
             BoardFilling([[COVERED, COVERED, COVERED, COVERED, COVERED],
                           [COVERED, COVERED, COVERED, COVERED, COVERED],
                           [COVERED, COVERED, COVERED, COVERED]])
+
+    def test_from_string(self):
+        board = self.DEFAULT_BOARD
+        board_from_str = BoardObjective.from_string("    \n"+
+                                                    " e>v\n"+
+                                                    "   v\n"+
+                                                    "   f")
+        print(board_from_str.paths[0].locations)
+        self.assertEqual(board, board_from_str)
+
+    def test_eq(self):
+        self.assertEqual(BoardObjective(
+                             [PathObjective.from_points([Point((1, 1)), Point((1, 3)), Point((3, 3))]),
+                              PathObjective.from_points([Point((1, 1)), Point((1, 3)), Point((0, 3))])],
+                             shape=(4, 4)),
+                         BoardObjective(
+                             [PathObjective.from_points([Point((1, 1)), Point((1, 3)), Point((0, 3))]),
+                              PathObjective.from_points([Point((1, 1)), Point((1, 3)), Point((3, 3))])],
+                             shape=(4, 4)))
+
+    def test_eq_different_shape(self):
+        self.assertNotEqual(self.DEFAULT_BOARD,
+                         BoardObjective(
+                             [PathObjective.from_points([Point((1, 1)), Point((1, 3)), Point((3, 3))])],
+                             shape=(4, 5)))
 
 
 if __name__ == '__main__':

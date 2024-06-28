@@ -110,7 +110,7 @@ class PathFilling:
 class Path:
     def __init__(self, start: Point, segments: list[Segment]):
         """
-        Creates that goes from point to point in straight vertical or horizontal segments
+        Creates a path that goes from point to point in straight vertical or horizontal segments.
         """
         self.corners: list[Point] = []
         self.directions: list[CardinalDirection] = []
@@ -139,6 +139,8 @@ class Path:
     def __len__(self):
         return len(self.locations)
 
+    def __eq__(self, other):
+        return set(self.locations) == set(other.locations)
 
 class PathObjective(Path):
     FORWARD = "FORWARD"
@@ -160,6 +162,27 @@ class PathObjective(Path):
                     mandatory_planes: tuple[int, ...] = ()):
         path = Path.from_points(points)
         return cls(path.locations[0], path.segments, flying_forward_mandatory, mandatory_planes)
+
+    @classmethod
+    def from_grid(cls, grid: np.ndarray[str], start: Point, flying_forward_mandatory: bool = False,
+                    mandatory_planes: tuple[int, ...] = ()):
+        current_location = start
+        previous_direction = 'undirected'
+        points = []
+        unit_steps = {'>': (0, 1), 'v': (1, 0), '^': (-1, 0), '<': (0, -1),
+                      'e': (0, 1), 's': (1, 0), 'n': (-1, 0), 'w': (0, -1)}
+        while True:
+            current_direction = grid[current_location.coordinates]
+
+            if current_direction != previous_direction:
+                points.append(current_location)
+
+            if current_direction == 'f':
+                break
+
+            current_location += unit_steps[current_direction]
+
+        return PathObjective.from_points(points, flying_forward_mandatory, mandatory_planes)
 
     def raise_exception_if_filling_invalid(self, filling: PathFilling):
         self._check_filling_shape(filling)
@@ -229,6 +252,11 @@ class PathObjective(Path):
         else:
             return self.OUT
 
+    def __eq__(self, other):
+        return super().__eq__(other) \
+               and self.mandatory_planes == other.mandatory_planes \
+                and self.flying_forward_mandatory == other.flying_forward_mandatory \
+                and (self.locations[0] == other.locations[0] or not self.flying_forward_mandatory)
 
 @dataclass
 class BoardFilling:
@@ -272,31 +300,33 @@ class BoardObjective:
 
     @classmethod
     def from_string(cls, board_objective_str: str):
-        paths = []
-        for i, row in enumerate(board_objective_str):
-            for j, char in enumerate(row):
-                if char == 's':
-                    return cls._create_path_objective(board_objective_str, (i,j))
-
-    @staticmethod
-    def _create_path_objective(board_objective_str, start) -> PathObjective:
         """
-        Walks along the path and creates a PathObjective object
+        Create a board objective from a string. Does not support overlapping path.
+        A path starts with w, s, n, e for the direction to go into and then is continued using
+        >, v, ^, < to indicate continuation of the same path, ending with an f
         :param board_objective_str:
-        :param start:
         :return:
         """
+        paths = []
+        board_objective_arr = np.array([list(row) for row in board_objective_str.split('\n')])
+        for loc, char in np.ndenumerate(board_objective_arr):
+            if char in ('n', 'w', 's', 'e'):
+                paths.append(PathObjective.from_grid(board_objective_arr, Point(loc)))
+        return cls(paths, shape=board_objective_arr.shape)
+    @staticmethod
+    def _create_path_objective_from_arr(board_objective_arr, start: Point) -> PathObjective:
         current_location = start
         previous_direction = 'undirected'
         points = []
-        unit_steps = {'>': (0,1), 'v': (1,0), '^': (-1,0), '<': (0,-1)}
+        unit_steps = {'>': (0,1), 'v': (1,0), '^': (-1,0), '<': (0,-1),
+                      'e': (0, 1), 's': (1, 0), 'n': (-1, 0), 'w': (0, -1)}
         while True:
-            current_direction = board_objective_str[current_location]
+            current_direction = board_objective_arr[current_location]
 
-            if  current_direction != previous_direction:
+            if current_direction != previous_direction:
                 points.append(current_location)
 
-            if current_direction == 'e':
+            if current_direction == 'f':
                 break
 
             current_location += unit_steps[current_direction]
@@ -318,10 +348,17 @@ class BoardObjective:
 
     def _check_all_planes_on_path(self, filling: BoardFilling):
         for location, plane in filling.enumerate_just_the_planes():
-            print(location, plane)
             if location not in self.allowed_plane_locations:
                 raise PlaneLocationException(f"Plane at {location} is outside the allowed paths.")
 
+    def __eq__(self, other):
+        for path in self.paths:
+            if path not in other.paths:
+                return False
 
-if __name__ == '__main__':
-    unittest.main()
+        for path in other.paths:
+            if path not in self.paths:
+                return False
+
+        return self.shape == other.shape
+
