@@ -1,5 +1,6 @@
 import unittest
 
+from tileComponents import NORTH_FACING_PLANE, WEST_FACING_PLANE, SOUTH_FACING_PLANE, EAST_FACING_PLANE, COVERED, UNCOVERED
 from tiling import *
 
 class TestTileMethods(unittest.TestCase):

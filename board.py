@@ -6,7 +6,7 @@ import itertools
 import numpy as np
 
 from cardinalDirections import *
-from tiling import Plane
+from tileComponents import Plane
 
 
 class InvalidFillingError(Exception):

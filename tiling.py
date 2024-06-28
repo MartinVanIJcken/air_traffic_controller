@@ -1,53 +1,12 @@
-from __future__ import annotations
-
-from abc import abstractmethod, ABC
 import numpy as np
 
-from cardinalDirections import *
+from tileComponents import TileComponent
+from board import BoardFilling
 
-class TileComponent(ABC):
-    @abstractmethod
-    def __repr__(self):
-        pass
-
-    @abstractmethod
-    def rotate(self, k):
-        pass
-
-
-class Plane(TileComponent):
-    ORDERED_PLANES_COUNTERCLOCKWISE: tuple[Plane, Plane, Plane, Plane]
-    def __init__(self, direction: CardinalDirection, symbol: str):
-        self.direction = direction
-
-    def __repr__(self):
-        return {NORTH: '^', WEST: '>', SOUTH: 'v', EAST: '>'}[self.direction]
-
-    def rotate(self, k):
-        i = self.ORDERED_PLANES_COUNTERCLOCKWISE.index(self)
-        return self.ORDERED_PLANES_COUNTERCLOCKWISE[(i+k)%4]
-
-class RotationInvariantComponent(TileComponent):
-    def __init__(self, symbol:str):
-        self.symbol = symbol
-
-    def __repr__(self):
-        return self.symbol
-
-    def rotate(self, k):
-        return self
-
-NORTH_FACING_PLANE = Plane(NORTH, '^')
-WEST_FACING_PLANE = Plane(WEST, '>')
-SOUTH_FACING_PLANE = Plane(SOUTH, 'v')
-EAST_FACING_PLANE = Plane(EAST, '<')
-
-Plane.ORDERED_PLANES_COUNTERCLOCKWISE = [NORTH_FACING_PLANE, WEST_FACING_PLANE, SOUTH_FACING_PLANE, EAST_FACING_PLANE]
-COVERED = RotationInvariantComponent('o')
-UNCOVERED = RotationInvariantComponent(' ')
+TileContentType = np.ndarray[TileComponent]
 
 class Tile:
-    def __init__(self, content: np.ndarray[TileComponent]):
+    def __init__(self, content: TileContentType):
         self.content = np.array(content)
 
     def rotation(self, k: int):
@@ -58,16 +17,14 @@ class Tile:
         """
         new_content = self.rotate_components(np.rot90(self.content, k), k)
         return Tile(new_content)
+
     @staticmethod
-    def rotate_components(content, k):
+    def rotate_components(content, k) -> TileContentType:
         new_content = []
         for row in content:
             new_content.append([])
             for tile in row:
-                if isinstance(tile, Plane):
-                    new_content[-1].append(tile.rotate(k))
-                else:
-                    new_content[-1].append(tile)
+                new_content[-1].append(tile.rotate(k))
 
         return new_content
 
@@ -77,7 +34,8 @@ class Tile:
     def __repr__(self):
         return repr(self.content)
 
-tile = Tile([[WEST_FACING_PLANE, COVERED],
-                 [UNCOVERED, COVERED],
-                 [UNCOVERED, COVERED]])
-print(tile.rotation(1))
+class Tiling:
+    def __init__(self, tiles: dict[tuple[int, int], Tile]):
+        self.tiles = tiles
+
+    def to_filling(self) -> BoardFilling:
