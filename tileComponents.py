@@ -4,6 +4,7 @@ from abc import abstractmethod, ABC
 
 from cardinalDirections import *
 
+
 class TileComponent(ABC):
     @abstractmethod
     def __repr__(self):
@@ -42,5 +43,5 @@ SOUTH_FACING_PLANE = Plane(SOUTH, 'v')
 EAST_FACING_PLANE = Plane(EAST, '<')
 
 Plane._PLANES_ORDERED_COUNTERCLOCKWISE = [NORTH_FACING_PLANE, WEST_FACING_PLANE, SOUTH_FACING_PLANE, EAST_FACING_PLANE]
-COVERED = RotationInvariantTileComponent('o')
-UNCOVERED = RotationInvariantTileComponent(' ')
+COVERED = RotationInvariantTileComponent('COVERED')
+UNCOVERED = RotationInvariantTileComponent('UNCOVERED')
