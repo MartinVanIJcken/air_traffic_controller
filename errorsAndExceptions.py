@@ -10,6 +10,11 @@ class FillingShapeError(InvalidFillingError):
 class TileLocationError(InvalidFillingError):
     pass
 
+
+class TileTypeError(InvalidFillingError):
+    pass
+
+
 class InvalidFillingException(Exception):
     pass
 
