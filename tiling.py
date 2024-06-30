@@ -2,6 +2,7 @@ import numpy as np
 
 from tileComponents import TileComponent, UNCOVERED
 from board import BoardFilling
+from errorsAndExceptions import TileLocationError
 
 TileContentType = np.ndarray[TileComponent]
 
@@ -56,7 +57,7 @@ class Tiling:
             absolute_location = tuple(top_left_corner + np.array(relative_location))
             try:
                 if self._filling[absolute_location] is not UNCOVERED:
-                    raise ValueError(f"The tiles overlap at location {absolute_location}.")
+                    raise TileLocationError(f"The tiles overlap at location {absolute_location}.")
             except IndexError:
-                raise ValueError("Tile lies outside the board.")
+                raise TileLocationError("Tile lies outside the board.")
             self._filling[absolute_location] = component

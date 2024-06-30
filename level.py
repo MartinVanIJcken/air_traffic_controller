@@ -1,6 +1,8 @@
 from board import BoardObjective
 from tiling import Tile
 from collections import Counter
+
+
 class Level:
     def __init__(self, objective: BoardObjective, tiles: list[Tile]):
         self.objective = objective

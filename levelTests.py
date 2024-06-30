@@ -4,9 +4,9 @@ from cardinalDirections import SOUTH, NORTH, WEST, EAST
 from level import *
 from tileComponents import UNCOVERED, COVERED, NORTH_FACING_PLANE, \
     WEST_FACING_PLANE, SOUTH_FACING_PLANE, EAST_FACING_PLANE
-from board import BoardObjective, PathObjective, Point, Segment, InvalidFillingException, InvalidFillingError
+from board import BoardObjective, PathObjective, Point, Segment
 from tiling import Tiling, Tile
-
+from errorsAndExceptions import *
 DEFAULT_TILE_1 = Tile([[COVERED, NORTH_FACING_PLANE]])  # orange
 DEFAULT_TILE_2 = Tile([COVERED, NORTH_FACING_PLANE])  # red
 DEFAULT_TILE_3 = Tile([[NORTH_FACING_PLANE, COVERED], [COVERED, UNCOVERED]])  # dark blue

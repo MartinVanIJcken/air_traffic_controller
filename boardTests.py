@@ -1,7 +1,7 @@
 import unittest
 from board import *
 from tileComponents import NORTH_FACING_PLANE, WEST_FACING_PLANE, SOUTH_FACING_PLANE, EAST_FACING_PLANE, COVERED
-
+from errorsAndExceptions import *
 
 class TestSegmentMethods(unittest.TestCase):
     def test_from_points_length(self):

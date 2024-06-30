@@ -2,6 +2,7 @@ import unittest
 
 from tileComponents import NORTH_FACING_PLANE, WEST_FACING_PLANE, SOUTH_FACING_PLANE, EAST_FACING_PLANE, COVERED, UNCOVERED
 from tiling import *
+from errorsAndExceptions import TileLocationError
 
 class TestTileMethods(unittest.TestCase):
     def test_rotate(self):
@@ -46,16 +47,16 @@ class TestTilingMethods(unittest.TestCase):
                                        [UNCOVERED, UNCOVERED, UNCOVERED, UNCOVERED]]))
 
     def test_overlapping_tiles_at_creation(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TileLocationError):
             Tiling([(0, 0), (0, 0)], [self.DEFAULT_TILE_1, self.DEFAULT_TILE_2], shape=(4, 4))
 
     def test_overlapping_tiles_at_addition(self):
         tiling = Tiling([(0, 0)], [self.DEFAULT_TILE_1], shape=(4, 4))
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TileLocationError):
             tiling.add_tile((0, 0), self.DEFAULT_TILE_2)
 
     def test_tile_outside_grid(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TileLocationError):
             Tiling([(0, 3)], [self.DEFAULT_TILE_1], shape=(4, 4))
 
 

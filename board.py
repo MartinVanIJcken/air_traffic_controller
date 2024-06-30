@@ -7,30 +7,8 @@ import numpy as np
 
 from cardinalDirections import *
 from tileComponents import Plane
-
-
-class InvalidFillingError(Exception):
-    pass
-
-
-class FillingShapeError(InvalidFillingError):
-    pass
-
-
-class InvalidFillingException(Exception):
-    pass
-
-
-class MissingPlaneException(InvalidFillingException):
-    pass
-
-
-class PlaneDirectionException(InvalidFillingException):
-    pass
-
-
-class PlaneLocationException(InvalidFillingException):
-    pass
+from errorsAndExceptions import MissingPlaneException, PlaneLocationException, PlaneDirectionException, \
+    FillingShapeError
 
 @dataclass(frozen=True)
 class Point:

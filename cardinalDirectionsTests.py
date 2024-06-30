@@ -2,6 +2,7 @@ import unittest
 
 from cardinalDirections import CardinalDirection, NORTH, SOUTH, WEST, EAST
 
+
 class TestCardinalDirections(unittest.TestCase):
     def test_invalid_direction(self):
         with self.assertRaises(ValueError):
