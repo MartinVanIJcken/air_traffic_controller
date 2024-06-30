@@ -12,11 +12,14 @@ class TestTileMethods(unittest.TestCase):
 
         rotated_tile_1 = Tile([[COVERED, COVERED, COVERED],
                      [SOUTH_FACING_PLANE, UNCOVERED, UNCOVERED]])
+        rotated_tile_1.has_been_rotated_by = 1
         rotated_tile_2 = Tile([[COVERED, UNCOVERED],
                                [COVERED, UNCOVERED],
                                [COVERED, EAST_FACING_PLANE]])
+        rotated_tile_2.has_been_rotated_by = 2
         rotated_tile_3 = Tile([[UNCOVERED, UNCOVERED, NORTH_FACING_PLANE],
                                [COVERED, COVERED, COVERED]])
+        rotated_tile_3.has_been_rotated_by = 3
 
         self.assertEqual(tile.rotation(0), tile)
         self.assertEqual(tile.rotation(1), rotated_tile_1)
@@ -31,6 +34,19 @@ class TestTileMethods(unittest.TestCase):
         self.assertEqual(set(tile.enumerate_components()),
                          {((0, 0), NORTH_FACING_PLANE), ((0, 1), COVERED), ((1, 0), COVERED),
                           ((1, 1), COVERED), ((2, 0), UNCOVERED), ((2, 1), COVERED)})
+
+    def test_hash(self):
+        tile = Tile([[WEST_FACING_PLANE, COVERED],
+                     [UNCOVERED, COVERED],
+                     [UNCOVERED, COVERED]])
+
+        print(hash(tile.rotation(1)), hash(tile))
+        self.assertEqual(hash(tile.rotation(0)), hash(tile))
+        self.assertEqual(hash(tile.rotation(1)), hash(tile))
+        self.assertEqual(hash(tile.rotation(2)), hash(tile))
+        self.assertEqual(hash(tile.rotation(3)), hash(tile))
+        self.assertEqual(hash(tile.rotation(4)), hash(tile))
+
 class TestTilingMethods(unittest.TestCase):
     DEFAULT_TILE_1 = Tile([[COVERED, UNCOVERED],
                                [COVERED, UNCOVERED],
@@ -61,4 +77,5 @@ class TestTilingMethods(unittest.TestCase):
 
 
 if __name__ == '__main__':
+
     unittest.main()

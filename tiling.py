@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 
 from tileComponents import TileComponent, UNCOVERED
@@ -9,6 +11,7 @@ TileContentType = list[list[TileComponent]]
 class Tile:
     def __init__(self, content: TileContentType):
         self.content = np.array(content)
+        self.has_been_rotated_by = 0
 
     def rotation(self, k: int):
         """
@@ -17,7 +20,9 @@ class Tile:
         :return: A tile with the same contents but rotated by k*90 degrees counterclockwise
         """
         new_content = self.rotate_components(np.rot90(self.content, k), k)
-        return Tile(new_content)
+        new_tile = Tile(new_content)
+        new_tile.has_been_rotated_by = (self.has_been_rotated_by+k)%4
+        return new_tile
 
     @staticmethod
     def rotate_components(content, k) -> TileContentType:
@@ -29,14 +34,15 @@ class Tile:
 
         return new_content
 
-    def __eq__(self, other):
-        return np.array_equal(self.content, other.content)
+    def __eq__(self, other: Tile):
+        return np.array_equal(self.rotation(-self.has_been_rotated_by+other.has_been_rotated_by).content, other.content)
 
     def __repr__(self):
         return repr(self.content)
 
     def __hash__(self):
-        return hash(self.content.tostring())
+        unrotated_tile = self.rotation(-self.has_been_rotated_by)
+        return hash(unrotated_tile.content.tostring())
 
     def enumerate_components(self):
         return np.ndenumerate(self.content)
