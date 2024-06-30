@@ -147,8 +147,8 @@ class PathObjective(Path):
     BACKWARD = "BACKWARD"
     OUT = "OUT"
 
-    def __init__(self, start: Point, segments: list[Segment], flying_forward_mandatory: bool,
-                 mandatory_planes: tuple[int]):
+    def __init__(self, start: Point, segments: list[Segment], flying_forward_mandatory: bool=False,
+                 mandatory_planes: tuple[int, ...]=()):
         """
         Creates that goes from point to point in straight vertical or horizontal lines
         """
