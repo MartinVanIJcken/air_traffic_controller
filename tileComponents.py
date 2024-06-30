@@ -37,6 +37,7 @@ class RotationInvariantTileComponent(TileComponent):
     def rotate(self, k):
         return self
 
+
 NORTH_FACING_PLANE = Plane(NORTH, '^')
 WEST_FACING_PLANE = Plane(WEST, '>')
 SOUTH_FACING_PLANE = Plane(SOUTH, 'v')
