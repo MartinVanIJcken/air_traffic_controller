@@ -19,11 +19,10 @@ class Point:
     def __getitem__(self, item):
         return self.coordinates[item]
 
-
+@dataclass
 class Segment:
-    def __init__(self, direction: CardinalDirection, length: int):
-        self.direction = direction
-        self.length = length
+    direction: CardinalDirection
+    length: int
 
     def locations(self, starting_location: Point) -> list[Point]:
         if self.direction is NORTH:
@@ -103,7 +102,6 @@ class Path:
 
         self.corners.pop()
         self.directions.append(self.directions[-1])
-        self.locations.append(current_location)
 
     @classmethod
     def from_points(cls, points: list[Point]):
@@ -111,6 +109,8 @@ class Path:
         segments = []
         for i in range(len(points) - 1):
             segments.append(Segment.from_points(points[i], points[i + 1]))
+
+        segments[-1].length += 1
 
         return cls(start, segments)
 
@@ -274,7 +274,7 @@ class BoardObjective:
         for path in self.paths:
             for location in itertools.chain([path.locations[0], path.locations[-1]], path.corners):
                 if location[0] < 0 or location[1] < 0 or location[0] >= self.shape[0] or location[1] >= self.shape[1]:
-                    raise ValueError("Paths do not fit within width of board.")
+                    raise ValueError("Paths do not fit within width of board." + f"{path.locations} {path.segments}")
 
     @classmethod
     def from_string(cls, board_objective_str: str):
@@ -339,4 +339,3 @@ class BoardObjective:
                 return False
 
         return self.shape == other.shape
-
