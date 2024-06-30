@@ -1,5 +1,3 @@
-import itertools
-
 from tiling import Tile
 from tileComponents import *
 from level import Level
