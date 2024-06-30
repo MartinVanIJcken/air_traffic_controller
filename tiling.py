@@ -4,7 +4,7 @@ from tileComponents import TileComponent, UNCOVERED
 from board import BoardFilling
 from errorsAndExceptions import TileLocationError
 
-TileContentType = np.ndarray[TileComponent]
+TileContentType = list[list[TileComponent]]
 
 class Tile:
     def __init__(self, content: TileContentType):
@@ -34,6 +34,9 @@ class Tile:
 
     def __repr__(self):
         return repr(self.content)
+
+    def __hash__(self):
+        return hash(self.content.tostring())
 
     def enumerate_components(self):
         return np.ndenumerate(self.content)
