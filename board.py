@@ -101,7 +101,6 @@ class Path:
             self.corners.append(current_location)
 
         self.corners.pop()
-        self.directions.append(self.directions[-1])
 
     @classmethod
     def from_points(cls, points: list[Point]):
