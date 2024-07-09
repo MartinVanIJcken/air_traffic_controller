@@ -1,2 +1,2 @@
 # air_traffic_controller
-Automate solving of the air traffic controller board game
+A practice project to practice OOP and the guidelines from 'clean code'. It describes the components from the children's board game 'air traffic controller'
